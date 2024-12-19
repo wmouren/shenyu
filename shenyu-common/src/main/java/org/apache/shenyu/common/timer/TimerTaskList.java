@@ -26,6 +26,10 @@ import java.util.function.Consumer;
 
 /**
  * TimerTaskList .
+ *
+ *  时间轮的每个槽位都是一个 TimerTaskList，TimerTaskList 是一个双向链表，每个 TimerTaskList 都有一个过期时间 expiration，
+ *  用于记录当前槽位的过期时间，TimerTaskList 会根据 expiration 来判断是否需要执行当前槽位的任务。
+ *
  */
 public class TimerTaskList implements Delayed, Iterable<TimerTask> {
     
@@ -72,6 +76,8 @@ public class TimerTaskList implements Delayed, Iterable<TimerTask> {
      * @param consumer the consumer
      */
     synchronized void flush(final Consumer<TimerTaskEntry> consumer) {
+        // 从链表中取出所有的任务，然后执行任务 consumer.accept
+        // 然后将 expiration 设置为 -1  表示当前槽位没有任务  防止重复执行
         TimerTaskEntry head = root.next;
         while (head != root) {
             this.remove(head);

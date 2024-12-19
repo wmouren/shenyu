@@ -39,6 +39,8 @@ import java.util.stream.Collectors;
 
 /**
  * The type Consumer executor.
+ * 事件消费者执行器 用于处理注册服务的消费者
+ * subscribers 为不同的事件消费者（策略模式） 通过 DataTypeParent 类型进行区分 哪个消费者来消费
  */
 public final class RegisterServerConsumerExecutor extends QueueConsumerExecutor<Collection<DataTypeParent>> {
     
@@ -104,7 +106,7 @@ public final class RegisterServerConsumerExecutor extends QueueConsumerExecutor<
     
         /**
          * Add subscribers abstract queue consumer factory.
-         *
+         * ExecutorTypeSubscriber 策略模式 有多种不同的事件消费者
          * @param subscriber the subscriber
          * @return the abstract queue consumer factory
          */

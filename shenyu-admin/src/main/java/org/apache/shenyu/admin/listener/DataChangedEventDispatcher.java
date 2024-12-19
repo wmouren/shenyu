@@ -52,6 +52,7 @@ public class DataChangedEventDispatcher implements ApplicationListener<DataChang
     @Override
     @SuppressWarnings("unchecked")
     public void onApplicationEvent(final DataChangedEvent event) {
+        // 事件驱动模式 类似 netty 中的 channel
         for (DataChangedListener listener : listeners) {
             switch (event.getGroupKey()) {
                 case APP_AUTH:

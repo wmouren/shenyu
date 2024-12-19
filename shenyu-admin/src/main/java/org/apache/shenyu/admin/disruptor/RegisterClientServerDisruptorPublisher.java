@@ -37,6 +37,10 @@ import java.util.stream.Collectors;
 
 /**
  * The type Disruptor publisher.
+ * disruptor publisher. 这里是注册服务的发布者
+ * 这里又封装了一层 作为单例模式实现 将启动Disruptor 服务和注册事件消费者
+ *
+ * 服务端事件发布者
  */
 public class RegisterClientServerDisruptorPublisher implements ShenyuClientServerRegisterPublisher {
     
@@ -55,7 +59,7 @@ public class RegisterClientServerDisruptorPublisher implements ShenyuClientServe
     
     /**
      * start.
-     *
+     *  注册 disruptor 事件处理器  消费者 ExecutorTypeSubscriber
      * @param shenyuClientRegisterService the shenyu client register service
      */
     public void start(final Map<String, ShenyuClientRegisterService> shenyuClientRegisterService) {
@@ -67,7 +71,8 @@ public class RegisterClientServerDisruptorPublisher implements ShenyuClientServe
         providerManage = new DisruptorProviderManage<>(factory);
         providerManage.startup();
     }
-    
+
+    // 发布事件，委托给 DisruptorProvider 处理
     @Override
     public void publish(final DataTypeParent data) {
         DisruptorProvider<Collection<DataTypeParent>> provider = providerManage.getProvider();

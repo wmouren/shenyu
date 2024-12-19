@@ -46,7 +46,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
- * This is web handler request starter.
+ * This is web handler request starter.  web 请求入门
  */
 public final class ShenyuWebHandler implements WebHandler, ApplicationListener<PluginHandlerEvent> {
 
@@ -259,6 +259,8 @@ public final class ShenyuWebHandler implements WebHandler, ApplicationListener<P
          */
         @Override
         public Mono<Void> execute(final ServerWebExchange exchange) {
+            // Mono.defer 为惰性加载，每次都会重新创建 lambda 中的 Mono 对象
+            // 当你运行 Mono.just() 它会立即创建一个 Observable(Mono) 并重用它但是当你使用 defer 它不会立即创建它它会在每个订阅中创建一个新的 Observable。
             return Mono.defer(() -> {
                 if (this.index < plugins.size()) {
                     ShenyuPlugin plugin = plugins.get(this.index++);

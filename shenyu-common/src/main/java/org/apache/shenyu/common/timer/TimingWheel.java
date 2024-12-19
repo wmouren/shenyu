@@ -75,15 +75,22 @@ class TimingWheel {
      * @return the boolean
      */
     boolean add(final TimerTaskList.TimerTaskEntry taskEntry) {
+        // 获取任务的超时时间
         Long expirationMs = taskEntry.getExpirationMs();
+        // 如果任务已经取消，则返回false 放弃执行
         if (taskEntry.cancelled()) {
             return false;
         }
+        // 判断任务是否已经过期 如果已经过期则返回false 立即执行
         if (expirationMs < currentTime + tickMs) {
             return false;
         }
+
+        // 如果任务的超时时间小于当前时间加上一个时间间隔，则将任务放入当前时间轮的对应槽中
         if (expirationMs < currentTime + interval) {
             //Put in its own bucket
+            // 计算任务的超时时间对应的槽的位置，将任务放入对应的槽中 并设置槽的过期时间
+            // 最后将任务放入延迟队列中
             long virtualId = expirationMs / tickMs;
             int index = (int) (virtualId % wheelSize);
             TimerTaskList bucket = this.getBucket(index);
@@ -93,15 +100,19 @@ class TimingWheel {
             }
             return true;
         }
+
+        // 如果任务的超时时间大于当前时间加上一个时间间隔，则将任务放入下一个时间轮的对应槽中
         if (Objects.isNull(overflowWheel)) {
+            // 创建下一个时间轮
             addOverflowWheel();
         }
+        // 将任务放入高一级时间轮的对应槽中
         return overflowWheel.add(taskEntry);
     }
 
     /**
      * Advance clock.
-     *
+     * 推进时间轮的时间
      * @param timeMs the time ms
      */
     void advanceClock(final long timeMs) {

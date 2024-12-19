@@ -34,6 +34,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * HierarchicalWheelTimer
  * The type Hierarchical Wheel timer.
  *
+ *  分层时间轮 基于延迟队列实现  用于解决任务重试的问题
  * @see TimingWheel
  */
 public class HierarchicalWheelTimer implements Timer {
@@ -47,6 +48,7 @@ public class HierarchicalWheelTimer implements Timer {
 
     private final AtomicInteger taskCounter = new AtomicInteger(0);
 
+    // 时间轮
     private final TimingWheel timingWheel;
 
     private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
@@ -87,6 +89,7 @@ public class HierarchicalWheelTimer implements Timer {
         timingWheel = new TimingWheel(tickMs, wheelSize, startMs, taskCounter, delayQueue);
     }
 
+    // 添加任务到时间轮中
     @Override
     public void add(final TimerTask timerTask) {
         if (Objects.isNull(timerTask)) {
@@ -104,8 +107,11 @@ public class HierarchicalWheelTimer implements Timer {
     }
 
     private void addTimerTaskEntry(final TimerTaskList.TimerTaskEntry timerTaskEntry) {
+        // 将任务添加到时间轮中 如果添加失败则直接执行任务
         if (!timingWheel.add(timerTaskEntry)) {
+            // 如果任务已经取消，则直接返回
             if (!timerTaskEntry.cancelled()) {
+                // 提交任务到线程池中执行
                 taskExecutor.submit(() -> timerTaskEntry.getTimerTask().run(timerTaskEntry));
             }
         }
@@ -113,12 +119,16 @@ public class HierarchicalWheelTimer implements Timer {
 
     @Override
     public void advanceClock(final long timeoutMs) throws InterruptedException {
+        // 从延迟队列中获取到期的任务 如果没有到期的任务则阻塞等待 timeoutMs 毫秒
+        // 如果有到期的任务则先推进时间轮的时间，然后将到期的任务提交到线程池中执行 addTimerTaskEntry
         TimerTaskList bucket = delayQueue.poll(timeoutMs, TimeUnit.MILLISECONDS);
         if (Objects.nonNull(bucket)) {
             writeLock.lock();
             try {
                 while (Objects.nonNull(bucket)) {
+                    // 推进时间轮的时间
                     timingWheel.advanceClock(bucket.getExpiration());
+                    // 将到期的任务提交到线程池中执行
                     bucket.flush(this::addTimerTaskEntry);
                     bucket = delayQueue.poll();
                 }
@@ -128,6 +138,7 @@ public class HierarchicalWheelTimer implements Timer {
         }
     }
 
+    // 启动时间轮 通过CAS操作保证只有一个线程启动时间轮
     private void start() {
         int state = WORKER_STATE_UPDATER.get(this);
         if (state == 0) {

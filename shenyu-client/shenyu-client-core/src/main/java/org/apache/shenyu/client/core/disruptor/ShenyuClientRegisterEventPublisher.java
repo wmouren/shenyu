@@ -28,6 +28,8 @@ import org.apache.shenyu.register.common.type.DataTypeParent;
 
 /**
  * The type shenyu client register event publisher.
+ *
+ * 客户端的事件发布者
  */
 public class ShenyuClientRegisterEventPublisher {
 

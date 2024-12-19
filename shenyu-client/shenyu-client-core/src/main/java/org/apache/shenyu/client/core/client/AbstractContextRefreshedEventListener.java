@@ -83,6 +83,7 @@ public abstract class AbstractContextRefreshedEventListener<T, A extends Annotat
 
     protected static final String EVERY_PATH = "**";
 
+    // 使用 Disruptor 发布事件 用于接口、元数据等信息注册持久化
     private final ShenyuClientRegisterEventPublisher publisher = ShenyuClientRegisterEventPublisher.getInstance();
 
     private final AtomicBoolean registered = new AtomicBoolean(false);

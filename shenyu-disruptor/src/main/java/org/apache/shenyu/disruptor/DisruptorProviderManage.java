@@ -41,6 +41,8 @@ import java.util.concurrent.TimeUnit;
  * disruptor provider manager.
  *
  * @param <T> the type parameter
+ *
+ *  Disruptor provider  管理器，用于创建 disruptor 事件处理器，并关联消费者启动 disruptor
  */
 public class DisruptorProviderManage<T> {
     
@@ -105,10 +107,12 @@ public class DisruptorProviderManage<T> {
      * @param isOrderly the orderly Whether to execute sequentially.
      */
     public void startup(final boolean isOrderly) {
+        // 创建一个线程池
         OrderlyExecutor executor = new OrderlyExecutor(isOrderly, consumerSize, consumerSize, 0, TimeUnit.MILLISECONDS,
                 new LinkedBlockingQueue<>(),
                 DisruptorThreadFactory.create("shenyu_disruptor_consumer_", false), new ThreadPoolExecutor.AbortPolicy());
         int newConsumerSize = this.consumerSize;
+        // 创建事件工厂
         EventFactory<DataEvent<T>> eventFactory;
         if (isOrderly) {
             newConsumerSize = 1;
@@ -116,20 +120,32 @@ public class DisruptorProviderManage<T> {
         } else {
             eventFactory = new DisruptorEventFactory<>();
         }
+        // 创建 disruptor
         Disruptor<DataEvent<T>> disruptor = new Disruptor<>(eventFactory,
                 size,
                 DisruptorThreadFactory.create("shenyu_disruptor_provider_" + consumerFactory.fixName(), false),
+                // 生产者类型 多生产者
                 ProducerType.MULTI,
+                // 等待策略
                 new BlockingWaitStrategy());
+
+        // 创建消费者
         @SuppressWarnings("all")
         QueueConsumer<T>[] consumers = new QueueConsumer[newConsumerSize];
         for (int i = 0; i < newConsumerSize; i++) {
             consumers[i] = new QueueConsumer<>(executor, consumerFactory);
         }
+        // 设置消费者
         disruptor.handleEventsWithWorkerPool(consumers);
+        // 设置异常处理器
         disruptor.setDefaultExceptionHandler(new IgnoreExceptionHandler());
+        // 启动 disruptor
         disruptor.start();
+        // 获取 ringBuffer
         RingBuffer<DataEvent<T>> ringBuffer = disruptor.getRingBuffer();
+        // 创建 disruptor provider 事件处理器用于发布事件，封装了 ringBuffer 和 disruptor，
+        // 降低了 disruptor 的使用难度，只需要调用 onData 方法即可发布事件。降低使用者心智负担
+        //
         provider = new DisruptorProvider<>(ringBuffer, disruptor, isOrderly);
     }
     

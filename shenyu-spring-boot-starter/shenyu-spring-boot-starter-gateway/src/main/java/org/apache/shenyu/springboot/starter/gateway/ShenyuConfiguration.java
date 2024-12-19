@@ -71,6 +71,8 @@ import java.util.stream.Collectors;
 
 /**
  * ShenyuConfiguration.
+ *
+ * shenyu 应用层配置类 包括入口和插件元信息缓存管理
  */
 @Configuration
 @ComponentScan("org.apache.shenyu")

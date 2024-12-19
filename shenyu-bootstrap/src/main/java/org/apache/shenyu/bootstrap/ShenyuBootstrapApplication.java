@@ -22,7 +22,12 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
  * Shenyu bootstrap.
+ * 启动类 启动整个网关项目 gateway shenyu-web loadbalance
+ * 本地缓存网关规则配置 和 admin 服务端进行数据同步
+ *
+ * 数据同步使用了 pull/push 结合的方式
  */
+
 @SpringBootApplication
 public class ShenyuBootstrapApplication {
 
